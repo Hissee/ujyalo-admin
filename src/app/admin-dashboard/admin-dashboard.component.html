@@ -1,0 +1,475 @@
+<div class="container-fluid py-4">
+  <app-toast></app-toast>
+  
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">
+          <i class="bi bi-shield-check text-danger"></i> Admin Dashboard
+        </h2>
+        <div class="d-flex align-items-center gap-3">
+          <span class="text-muted">Welcome, {{ currentUser?.name || 'Admin' }}</span>
+          <button class="btn btn-outline-danger btn-sm" (click)="logout()">
+            <i class="bi bi-box-arrow-right"></i> Logout
+          </button>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <ul class="nav nav-tabs mb-4">
+        <li class="nav-item">
+          <button class="nav-link" [class.active]="activeTab === 'overview'" (click)="setActiveTab('overview')">
+            <i class="bi bi-speedometer2"></i> Overview
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" [class.active]="activeTab === 'users'" (click)="setActiveTab('users')">
+            <i class="bi bi-people"></i> Users
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" [class.active]="activeTab === 'products'" (click)="setActiveTab('products')">
+            <i class="bi bi-box-seam"></i> Products
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" [class.active]="activeTab === 'orders'" (click)="setActiveTab('orders')">
+            <i class="bi bi-cart-check"></i> Orders
+          </button>
+        </li>
+      </ul>
+
+      <!-- Overview Tab -->
+      @if (activeTab === 'overview') {
+        <div>
+          @if (loadingStats) {
+            <div class="text-center py-5">
+              <div class="spinner-border" role="status"></div>
+              <p class="mt-2">Loading dashboard...</p>
+            </div>
+          } @else if (stats) {
+            <!-- Stats Cards -->
+            <div class="row g-3 mb-4">
+              <div class="col-md-3">
+                <div class="card text-center">
+                  <div class="card-body">
+                    <h3 class="text-primary">{{ stats.totalUsers }}</h3>
+                    <p class="text-muted mb-0">Total Users</p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="card text-center">
+                  <div class="card-body">
+                    <h3 class="text-success">{{ stats.totalFarmers }}</h3>
+                    <p class="text-muted mb-0">Farmers</p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="card text-center">
+                  <div class="card-body">
+                    <h3 class="text-info">{{ stats.totalConsumers }}</h3>
+                    <p class="text-muted mb-0">Consumers</p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="card text-center">
+                  <div class="card-body">
+                    <h3 class="text-warning">{{ stats.totalProducts }}</h3>
+                    <p class="text-muted mb-0">Products</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <div class="card text-center">
+                  <div class="card-body">
+                    <h3 class="text-success">{{ stats.totalOrders }}</h3>
+                    <p class="text-muted mb-0">Total Orders</p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="card text-center">
+                  <div class="card-body">
+                    <h3 class="text-success">{{ formatCurrency(stats.totalRevenue) }}</h3>
+                    <p class="text-muted mb-0">Total Revenue</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Recent Orders & Users -->
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div class="card">
+                  <div class="card-header">
+                    <h5 class="mb-0">Recent Orders</h5>
+                  </div>
+                  <div class="card-body">
+                    @if (recentOrders.length === 0) {
+                      <p class="text-muted">No recent orders</p>
+                    } @else {
+                      <div class="table-responsive">
+                        <table class="table table-sm">
+                          <thead>
+                            <tr>
+                              <th>Order #</th>
+                              <th>Customer</th>
+                              <th>Amount</th>
+                              <th>Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            @for (order of recentOrders; track order._id) {
+                              <tr>
+                                <td>{{ order.orderNumber }}</td>
+                                <td>{{ order.customerName }}</td>
+                                <td>{{ formatCurrency(order.totalAmount) }}</td>
+                                <td>
+                                  <span class="badge" [ngClass]="{
+                                    'bg-warning': order.status === 'pending',
+                                    'bg-info': order.status === 'confirmed',
+                                    'bg-primary': order.status === 'processing',
+                                    'bg-secondary': order.status === 'shipped',
+                                    'bg-success': order.status === 'completed' || order.status === 'delivered',
+                                    'bg-danger': order.status === 'cancelled'
+                                  }">
+                                    {{ order.status }}
+                                  </span>
+                                </td>
+                              </tr>
+                            }
+                          </tbody>
+                        </table>
+                      </div>
+                    }
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="card">
+                  <div class="card-header">
+                    <h5 class="mb-0">Recent Users</h5>
+                  </div>
+                  <div class="card-body">
+                    @if (recentUsers.length === 0) {
+                      <p class="text-muted">No recent users</p>
+                    } @else {
+                      <div class="table-responsive">
+                        <table class="table table-sm">
+                          <thead>
+                            <tr>
+                              <th>Name</th>
+                              <th>Email</th>
+                              <th>Role</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            @for (user of recentUsers; track user._id) {
+                              <tr>
+                                <td>{{ user.name }}</td>
+                                <td>{{ user.email }}</td>
+                                <td>
+                                  <span class="badge" [ngClass]="{
+                                    'bg-success': user.role === 'farmer',
+                                    'bg-info': user.role === 'consumer'
+                                  }">
+                                    {{ user.role }}
+                                  </span>
+                                </td>
+                              </tr>
+                            }
+                          </tbody>
+                        </table>
+                      </div>
+                    }
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Users Tab -->
+      @if (activeTab === 'users') {
+        <div>
+          <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <h5 class="mb-0">User Management</h5>
+              <div class="d-flex gap-2">
+                <input
+                  type="text"
+                  class="form-control form-control-sm"
+                  placeholder="Search users..."
+                  [(ngModel)]="userSearch"
+                  (input)="loadUsers()"
+                  style="width: 200px;">
+                <select
+                  class="form-select form-select-sm"
+                  [(ngModel)]="userRoleFilter"
+                  (change)="loadUsers()"
+                  style="width: 150px;">
+                  <option value="">All Roles</option>
+                  <option value="farmer">Farmer</option>
+                  <option value="consumer">Consumer</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+            </div>
+            <div class="card-body">
+              @if (loadingUsers) {
+                <div class="text-center py-4">
+                  <div class="spinner-border" role="status"></div>
+                </div>
+              } @else {
+                <div class="table-responsive">
+                  <table class="table table-hover">
+                    <thead>
+                      <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Email Verified</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (user of users; track user._id) {
+                        <tr>
+                          <td>{{ user.name }}</td>
+                          <td>{{ user.email }}</td>
+                          <td>
+                            <span class="badge" [ngClass]="{
+                              'bg-success': user.role === 'farmer',
+                              'bg-info': user.role === 'consumer',
+                              'bg-danger': user.role === 'admin'
+                            }">
+                              {{ user.role }}
+                            </span>
+                          </td>
+                          <td>
+                            @if (user.deactivated) {
+                              <span class="badge bg-danger">Deactivated</span>
+                            } @else {
+                              <span class="badge bg-success">Active</span>
+                            }
+                          </td>
+                          <td>
+                            @if (user.emailVerified) {
+                              <span class="badge bg-success">Verified</span>
+                            } @else {
+                              <span class="badge bg-warning">Not Verified</span>
+                            }
+                          </td>
+                          <td>
+                            <div class="btn-group btn-group-sm">
+                              @if (!user.emailVerified) {
+                                <button
+                                  class="btn btn-outline-info btn-sm"
+                                  (click)="verifyUserEmail(user._id)"
+                                  title="Verify Email">
+                                  <i class="bi bi-check-circle"></i>
+                                </button>
+                              }
+                              @if (user.deactivated) {
+                                <button
+                                  class="btn btn-outline-success btn-sm"
+                                  (click)="updateUserStatus(user._id, false)"
+                                  title="Activate">
+                                  <i class="bi bi-check"></i>
+                                </button>
+                              } @else {
+                                <button
+                                  class="btn btn-outline-warning btn-sm"
+                                  (click)="updateUserStatus(user._id, true)"
+                                  title="Deactivate">
+                                  <i class="bi bi-x-circle"></i>
+                                </button>
+                              }
+                              <button
+                                class="btn btn-outline-danger btn-sm"
+                                (click)="deleteUser(user._id, user.name)"
+                                title="Delete">
+                                <i class="bi bi-trash"></i>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Products Tab -->
+      @if (activeTab === 'products') {
+        <div>
+          <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <h5 class="mb-0">Product Management</h5>
+              <div class="d-flex gap-2">
+                <input
+                  type="text"
+                  class="form-control form-control-sm"
+                  placeholder="Search products..."
+                  [(ngModel)]="productSearch"
+                  (input)="loadProducts()"
+                  style="width: 200px;">
+                <select
+                  class="form-select form-select-sm"
+                  [(ngModel)]="productCategoryFilter"
+                  (change)="loadProducts()"
+                  style="width: 150px;">
+                  <option value="">All Categories</option>
+                  <option value="fruits">Fruits</option>
+                  <option value="vegetables">Vegetables</option>
+                  <option value="grains">Grains</option>
+                  <option value="dairy">Dairy</option>
+                </select>
+              </div>
+            </div>
+            <div class="card-body">
+              @if (loadingProducts) {
+                <div class="text-center py-4">
+                  <div class="spinner-border" role="status"></div>
+                </div>
+              } @else {
+                <div class="row g-3">
+                  @for (product of products; track product._id) {
+                    <div class="col-md-6">
+                      <div class="card">
+                        <div class="card-body">
+                          <div class="d-flex justify-content-between">
+                            <div>
+                              <h6 class="mb-1">{{ product.name }}</h6>
+                              <p class="text-muted small mb-1">{{ product.category }}</p>
+                              <p class="mb-0"><strong>{{ formatCurrency(product.price) }}</strong> / kg</p>
+                              @if (product.farmer) {
+                                <p class="text-muted small mb-0">Farmer: {{ product.farmer.name }}</p>
+                              }
+                            </div>
+                            <button
+                              class="btn btn-sm btn-outline-danger"
+                              (click)="deleteProduct(product._id, product.name)"
+                              title="Delete Product">
+                              <i class="bi bi-trash"></i>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Orders Tab -->
+      @if (activeTab === 'orders') {
+        <div>
+          <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <h5 class="mb-0">Order Management</h5>
+              <div class="d-flex gap-2">
+                <input
+                  type="text"
+                  class="form-control form-control-sm"
+                  placeholder="Search orders..."
+                  [(ngModel)]="orderSearch"
+                  (input)="loadOrders()"
+                  style="width: 200px;">
+                <select
+                  class="form-select form-select-sm"
+                  [(ngModel)]="orderStatusFilter"
+                  (change)="loadOrders()"
+                  style="width: 150px;">
+                  <option value="">All Status</option>
+                  <option value="pending">Pending</option>
+                  <option value="confirmed">Confirmed</option>
+                  <option value="processing">Processing</option>
+                  <option value="shipped">Shipped</option>
+                  <option value="delivered">Delivered</option>
+                  <option value="completed">Completed</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </div>
+            </div>
+            <div class="card-body">
+              @if (loadingOrders) {
+                <div class="text-center py-4">
+                  <div class="spinner-border" role="status"></div>
+                </div>
+              } @else {
+                <div class="table-responsive">
+                  <table class="table table-hover">
+                    <thead>
+                      <tr>
+                        <th>Order #</th>
+                        <th>Customer</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (order of orders; track order._id) {
+                        <tr>
+                          <td>{{ order.orderNumber }}</td>
+                          <td>{{ order.customerName }}</td>
+                          <td>{{ formatCurrency(order.totalAmount) }}</td>
+                          <td>
+                            <span class="badge" [ngClass]="{
+                              'bg-warning': order.status === 'pending',
+                              'bg-info': order.status === 'confirmed',
+                              'bg-primary': order.status === 'processing',
+                              'bg-secondary': order.status === 'shipped',
+                              'bg-success': order.status === 'completed' || order.status === 'delivered',
+                              'bg-danger': order.status === 'cancelled'
+                            }">
+                              {{ order.status }}
+                            </span>
+                          </td>
+                          <td>{{ formatDate(order.createdAt) }}</td>
+                          <td>
+                            <select
+                              class="form-select form-select-sm"
+                              [value]="order.status"
+                              (change)="updateOrderStatus(order._id, $any($event.target).value)"
+                              style="width: 150px;">
+                              <option value="pending">Pending</option>
+                              <option value="confirmed">Confirmed</option>
+                              <option value="processing">Processing</option>
+                              <option value="shipped">Shipped</option>
+                              <option value="delivered">Delivered</option>
+                              <option value="completed">Completed</option>
+                              <option value="cancelled">Cancelled</option>
+                            </select>
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</div>
+

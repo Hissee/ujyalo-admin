@@ -1,0 +1,61 @@
+<div class="container-fluid vh-100 d-flex align-items-center justify-content-center bg-light">
+  <div class="card shadow-lg" style="width: 100%; max-width: 400px;">
+    <div class="card-body p-5">
+      <div class="text-center mb-4">
+        <h2 class="mb-2">
+          <i class="bi bi-shield-check text-danger"></i> Admin Panel
+        </h2>
+        <p class="text-muted">Ujyalo Khet Administration</p>
+      </div>
+
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+        <div class="mb-3">
+          <label for="email" class="form-label">Email</label>
+          <input
+            type="email"
+            class="form-control"
+            id="email"
+            formControlName="email"
+            placeholder="admin@example.com"
+            [class.is-invalid]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched">
+          @if (loginForm.get('email')?.invalid && loginForm.get('email')?.touched) {
+            <div class="invalid-feedback">Please enter a valid email</div>
+          }
+        </div>
+
+        <div class="mb-4">
+          <label for="password" class="form-label">Password</label>
+          <input
+            type="password"
+            class="form-control"
+            id="password"
+            formControlName="password"
+            placeholder="Enter your password"
+            [class.is-invalid]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched">
+          @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
+            <div class="invalid-feedback">Password is required</div>
+          }
+        </div>
+
+        @if (errorMessage) {
+          <div class="alert alert-danger" role="alert">
+            {{ errorMessage }}
+          </div>
+        }
+
+        <button
+          type="submit"
+          class="btn btn-danger w-100"
+          [disabled]="loginForm.invalid || loading">
+          @if (loading) {
+            <span class="spinner-border spinner-border-sm me-2"></span>
+            Logging in...
+          } @else {
+            <i class="bi bi-box-arrow-in-right me-2"></i>Login
+          }
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
